@@ -2,7 +2,7 @@
 
 import cv2, numpy as np
 
-class yoloDectector:
+class yoloDetector:
   def __init__(self, config_path, weights, class_names, conf_threshold=0.5, nms_threshold=0.4):
     self.net = cv2.dnn.readNetFromDarknet(config_path, weights)
     self.confidence_threshold = conf_threshold

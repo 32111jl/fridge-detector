@@ -1,6 +1,7 @@
 import cv2, os, sys, argparse
 
 from models.yolo.yolo import yoloDetector
+from models.rcnn.rcnn import rcnnDetector
 # run as python -m scripts.train with flags
 
 MODEL_MAP = {
@@ -15,9 +16,8 @@ MODEL_MAP = {
     'class_names': 'models/resnet/coco.names'
   },
   'rcnn': {
-    'config': 'models/rcnn/rcnn.cfg',
-    'weights': 'models/rcnn/rcnn.weights',
-    'class_names': 'models/rcnn/coco.names'
+    'num_classes': 80,
+    'conf_threshold': 0.5
   }
 }
 
@@ -34,6 +34,10 @@ def get_all_imgs(folder_path):
 
 
 def eval_model(detector, images, output_folder):
+  # create output dir if it dne
+  if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+  
   total_detects = 0
   for i, image in enumerate(images):
     detections = detector.detect(image)
@@ -45,12 +49,29 @@ def eval_model(detector, images, output_folder):
 
 
 def parse_arguments():
-  parser = argparse.ArgumentParser(description="Train a specific model.")
-  parser.add_argument("--model", choices=["yolo", "resnet", "rcnn"], help="Specify model to train", required=True)
-  parser.add_argument("-i", "--input", type=str, help="Path to input data", required=True)
-  parser.add_argument("-o", "--output", type=str, help="Path to output data", required=True)
-  parser.add_argument("-c", "--config", type=str, help="Path to model config")
-  parser.add_argument("-w", "--weights", type=str, help="Path to model weights")
+  parser = argparse.ArgumentParser(description="Train a specific model.", add_help=False)
+  subparsers = parser.add_subparsers(dest="model", required=True, help="Specify model to train")
+  
+  # parent parser (shared arguments)
+  parent_parser = argparse.ArgumentParser(add_help=False)
+  parent_parser.add_argument("-i", "--input", type=str, help="Path to input data", required=True)
+  parent_parser.add_argument("-o", "--output", type=str, help="Path to output data", required=True)
+    
+  # yolo subparser
+  yolo_parser = subparsers.add_parser("yolo", parents=[parent_parser], help="YOLO model requires config, weights, class_names")
+  yolo_parser.add_argument("-c", "--config", type=str, default=MODEL_MAP['yolo']['config'],
+                          help="Path to model config, ex. yolo/yolov4.cfg")
+  yolo_parser.add_argument("-w", "--weights", type=str, default=MODEL_MAP['yolo']['weights'],
+                          help="Path to model weights, ex. yolo/yolov4.weights")
+  
+  # resnet subparser
+  
+  # rcnn subparser
+  rcnn_parser = subparsers.add_parser("rcnn", parents=[parent_parser], help="RCNN model requires num_classes, conf_threshold")
+  rcnn_parser.add_argument("-n", "--num_classes", type=int, default=MODEL_MAP['rcnn']['num_classes'],
+                          help="Number of classes, default is 80")
+  rcnn_parser.add_argument("-t", "--conf_threshold", type=float, default=MODEL_MAP['rcnn']['conf_threshold'],
+                          help="Confidence threshold, default is 0.5")
   
   return parser.parse_args()
 
@@ -58,15 +79,7 @@ def parse_arguments():
 def main():
   args = parse_arguments()
   
-  # check if -c and -w are provided; if not, use default paths
-  if not args.config:
-    args.config = MODEL_MAP[args.model]['config']
-  if not args.weights:
-    args.weights = MODEL_MAP[args.model]['weights']
-  args.class_names = MODEL_MAP[args.model]['class_names']
-  
   if args.model == "yolo":
-    # from models.yolo.yolo import yoloDetector
     detector = yoloDetector(args.config, args.weights, args.class_names)
 
   elif args.model == "resnet":
@@ -74,8 +87,7 @@ def main():
     detector = resnetDetector(args.config, args.weights, args.class_names)
     
   elif args.model == "rcnn":
-    from models.rcnn.rcnn import rcnnDetector
-    detector = rcnnDetector(args.config, args.weights, args.class_names)
+    detector = rcnnDetector(args.num_classes, args.conf_threshold)
   
   images = get_all_imgs(args.input)
   total_detects = eval_model(detector, images, args.output)
@@ -84,14 +96,3 @@ def main():
 if __name__ == "__main__":
   # print(cv2.__version__)
   main()
-  # config_path = 'models/yolo/yolov4.cfg'
-  # weights = 'models/yolo/yolov4.weights'
-  # class_names = 'models/yolo/coco.names'
-  # input_path = 'data/images/archive/fruits-360_dataset_100x100/fruits-360/Training/Apple Crimson Snow 1'
-  # output_path = 'models/yolo/output/apple_crimson'
-  
-  # detector = yoloDectector(config_path, weights, class_names, conf_threshold=0.3, nms_threshold=0.4)
-  # images = get_all_imgs(input_path)
-  # total_detects = eval_model(detector, images, output_path)
-  
-  # print(f'Total detections: {total_detects}')

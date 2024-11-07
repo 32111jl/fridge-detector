@@ -2,6 +2,7 @@ import cv2, os, sys, argparse
 
 from models.yolo.yolo import yoloDetector
 from models.rcnn.rcnn import rcnnDetector
+# from models.resnet.resnet import resnetDetector
 # run as python -m scripts.train with flags
 
 MODEL_MAP = {
@@ -9,6 +10,11 @@ MODEL_MAP = {
     'config': 'models/yolo/yolov4.cfg',
     'weights': 'models/yolo/yolov4.weights',
     'class_names': 'models/yolo/coco.names'
+  },
+  'yolo_hands' : {
+    'config': 'models/yolo/hands/yolov4.cfg',
+    'weights': 'models/yolo/hands/yolov4.weights',
+    'class_names': 'models/yolo/hands/coco.names'
   },
   'resnet': {
     'config': 'models/resnet/resnet50.cfg',
@@ -83,7 +89,6 @@ def main():
     detector = yoloDetector(args.config, args.weights, args.class_names)
 
   elif args.model == "resnet":
-    from models.resnet.resnet import resnetDetector
     detector = resnetDetector(args.config, args.weights, args.class_names)
     
   elif args.model == "rcnn":

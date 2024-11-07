@@ -1,3 +1,5 @@
+# rcnn for object detecion (fridge items)
+
 import torch, torchvision
 import cv2, numpy as np
 
@@ -11,7 +13,7 @@ class rcnnDetector:
     self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=weights)
     
     # worry about num classes?
-    if num_classes !=80:
+    if num_classes != 80:
       in_features = self.model.roi_heads.box_predictor.cls_score.in_features
       self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
     

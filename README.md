@@ -8,8 +8,13 @@ This project benchmarks several modern computer vision models (adapted from Open
 
 
 ## Models and Weights
+#### YOLOv5mu:
+- pre-trained weights were obtained from [Ultralytics Docs](https://docs.ultralytics.com/models/yolov5/#performance-metrics).
+- using for quick-and-dirty hand detection.
+  
 #### YOLOv4:
 - pre-trained weights and model configuration were obtained from [AlexeyAB's darknet repo](https://github.com/AlexeyAB/darknet).
+- using for _____.
 
 #### Resnet:
 - pre-trained

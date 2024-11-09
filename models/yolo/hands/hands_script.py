@@ -11,6 +11,6 @@ print(yaml_path, project_path)
 
 model.train(data=yaml_path,
             epochs=10,
-            batch=16,
-            imgsz=640,
+            batch=8,
+            imgsz=416,
             save_dir=project_path)

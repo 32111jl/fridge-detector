@@ -1,16 +1,13 @@
+# using google colab to train this instead, results in 'train' folder
+
 import os
 from ultralytics import *
 # https://docs.ultralytics.com/models/yolov5/#performance-metrics
 
-model = YOLO('yolov5mu.pt')
+hand_model = YOLO('models/yolo/hands/train/weights/best.pt')
+results = hand_model.predict(source='data/hands/Testing', imgsz=416, conf=0.95)
 
-yaml_path = os.path.join('models', 'yolo', 'hands', 'data.yaml')
-project_path = os.path.join('data', 'hands', 'results')
-
-print(yaml_path, project_path)
-
-model.train(data=yaml_path,
-            epochs=10,
-            batch=8,
-            imgsz=416,
-            save_dir=project_path)
+save_dir = 'data/hands/results/yolo_hands'
+# results.save(save_dir=save_dir)
+for i, result in enumerate(results):
+  result.save(f"{save_dir}/pred_{i}.jpg")

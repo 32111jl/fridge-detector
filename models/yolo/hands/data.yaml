@@ -1,6 +1,0 @@
-train: /Users/johnnyliu/Downloads/JHU '24-25/CV 601.461/fridge-detector/data/hands/Training
-val: /Users/johnnyliu/Downloads/JHU '24-25/CV 601.461/fridge-detector/data/hands/Testing
-# train: /content/dataset/hands/Training
-# val: /content/dataset/hands/Testing
-nc: 1
-names: ['Hand']

@@ -74,8 +74,6 @@ def parse_arguments():
   
   # rcnn subparser
   rcnn_parser = subparsers.add_parser("rcnn", parents=[parent_parser], help="RCNN model requires num_classes, conf_threshold")
-  rcnn_parser.add_argument("-n", "--num_classes", type=int, default=MODEL_MAP['rcnn']['num_classes'],
-                          help="Number of classes, default is 80")
   rcnn_parser.add_argument("-t", "--conf_threshold", type=float, default=MODEL_MAP['rcnn']['conf_threshold'],
                           help="Confidence threshold, default is 0.5")
   
@@ -90,9 +88,9 @@ def main():
 
   elif args.model == "resnet":
     detector = resnetDetector(args.config, args.weights, args.class_names)
-    
+
   elif args.model == "rcnn":
-    detector = rcnnDetector(args.num_classes, args.conf_threshold)
+    detector = rcnnDetector(args.conf_threshold)
   
   images = get_all_imgs(args.input)
   total_detects = eval_model(detector, images, args.output)

@@ -1,3 +1,4 @@
 models/yolo/yolov4.weights filter=lfs diff=lfs merge=lfs -text
 models/yolo/hands/yolov4.weights filter=lfs diff=lfs merge=lfs -text
 models/yolo/hands/hand_colab.ipynb filter=lfs diff=lfs merge=lfs -text
+models/yolo/yolo11_fruits/yolo11l.pt filter=lfs diff=lfs merge=lfs -text

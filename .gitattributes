@@ -2,3 +2,8 @@ models/yolo/yolov4.weights filter=lfs diff=lfs merge=lfs -text
 models/yolo/hands/yolov4.weights filter=lfs diff=lfs merge=lfs -text
 models/yolo/hands/hand_colab.ipynb filter=lfs diff=lfs merge=lfs -text
 models/yolo/yolo11_fruits/yolo11l.pt filter=lfs diff=lfs merge=lfs -text
+data/hands/Testing.zip filter=lfs diff=lfs merge=lfs -text
+data/hands/Training.zip filter=lfs diff=lfs merge=lfs -text
+data/hands/results.zip filter=lfs diff=lfs merge=lfs -text
+data/images/fruits-360.zip filter=lfs diff=lfs merge=lfs -text
+data/images/New[[:space:]]VegNet.zip filter=lfs diff=lfs merge=lfs -text

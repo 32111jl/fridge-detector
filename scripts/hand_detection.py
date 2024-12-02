@@ -33,14 +33,13 @@ class FruitDetection:
     self.last_pred = []
     self.last_time = datetime.now()
     self.text_reader = easyocr.Reader(['en'])
+    self.last_ocr_result = None
     
   def async_inference(self, frame):
     print("Starting inference...")
     def run_inference():
       temp_img_path = "temp.jpg"
-      result = self.text_reader.readtext(temp_img_path, detail = 0) # detail = 0 means omit bounding boxes and confidence levels
-      print(f"OCR Result: {result}")
-      cv2.imwrite(temp_img_path, frame)
+      cv2.imwrite(temp_img_path, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
       prediction = self.model.predict(temp_img_path)
       print(f"Prediction: {prediction.json()}")
       self.last_pred = prediction.json()["predictions"]
@@ -48,6 +47,15 @@ class FruitDetection:
     
     thread = threading.Thread(target=run_inference)
     thread.start()
+    
+  def run_ocr(self, frame):
+    """Run OCR separately from regular inference"""
+    print("Running OCR...")
+    temp_img_path = "temp_ocr.jpg"
+    cv2.imwrite(temp_img_path, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+    self.last_ocr_result = self.text_reader.readtext(temp_img_path, detail = 0)
+    print(f"OCR Result: {self.last_ocr_result}")
+    return self.last_ocr_result
   
   def draw_predictions(self, frame):
     if self.last_pred:
@@ -346,6 +354,8 @@ class SimpleHandTracker:
                         
                         hold_duration = (datetime.now() - self.holding_start_time).total_seconds()
                         print(f"Action: {action} (Position: {self.last_hand_position:.2f}, Duration: {hold_duration:.1f}s)")
+                        
+                        ocr_result = self.fruit_detector.run_ocr(frame)
                         
                         self.last_action = action
                         self.last_action_time = datetime.now()

@@ -47,25 +47,25 @@ class ThresholdTrainer:
         # time and camera
         time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         cv2.putText(frame, time_str, (20, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # collection status
         status = f"Item #{self.current_item} - Samples: {self.samples_per_item}"
         cv2.putText(frame, status, (20, 60), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # controls - centered
         controls = "SPACE: capture | N: next item | S: save"
         text_size = cv2.getTextSize(controls, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
         text_x = (frame.shape[1] - text_size[0]) // 2
         cv2.putText(frame, controls, (text_x, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # quit instruction - right aligned
         quit_text = "Q: quit"
         quit_size = cv2.getTextSize(quit_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
         cv2.putText(frame, quit_text, (frame.shape[1] - quit_size[0] - 20, 60), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         return frame
     

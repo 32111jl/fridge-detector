@@ -1,5 +1,6 @@
 import cv2 # type: ignore
 import mediapipe as mp # type: ignore
+import roboflow
 from datetime import datetime
 import numpy as np
 import os
@@ -21,6 +22,55 @@ class CameraState:
         self.last_seen_position = None
         self.stable_frames = 0
         self.holding_frames = 0  # Counter for consistent holding detection
+
+class FruitDetection:
+  def __init__(self, api_key):
+    self.rf = roboflow.Roboflow(api_key)
+    self.model = self.rf.workspace().project("fridge-detector-wdnfr").version("6").model
+    self.model.confidence = 0.9
+    self.model.overlap = 0.4
+    self.last_pred = []
+    self.last_time = datetime.now()
+    
+  def async_inference(self, frame):
+    print("Starting inference...")
+    def run_inference():
+      temp_img_path = "temp.jpg"
+      cv2.imwrite(temp_img_path, frame)
+      prediction = self.model.predict(temp_img_path)
+      print(f"Prediction: {prediction.json()}")
+      self.last_pred = prediction.json()["predictions"]
+      self.last_time = datetime.now()
+    
+    thread = threading.Thread(target=run_inference)
+    thread.start()
+  
+  def draw_predictions(self, frame):
+    if self.last_pred:
+      print("Drawing predictions...")
+      for prediction in self.last_pred:
+        class_name = prediction["class"]
+        confidence = prediction["confidence"]
+        
+        x_center = prediction["x"]
+        y_center = prediction["y"]
+        width  = prediction["width"]
+        height = prediction["height"]
+        # x1 = int((x_center - width/2) * frame.shape[1])
+        # y1 = int((y_center - height/2) * frame.shape[0])
+        # x2 = int((x_center + width/2) * frame.shape[1])
+        # y2 = int((y_center + height/2) * frame.shape[0])
+        x1 = int(x_center - width / 3)
+        y1 = int(y_center - height / 2.5)
+        x2 = int(x_center + width / 3)
+        y2 = int(y_center + height / 2.5)
+        
+        print(f"Detected {class_name} at ({x_center}, {y_center}) with confidence {confidence}")
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(frame, f"{class_name} ({confidence:.2f})", (x1, y1 - 10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        
+    return frame
 
 class SimpleHandTracker:
     def __init__(self):
@@ -57,6 +107,8 @@ class SimpleHandTracker:
         self.max_trail_length = 20
         self.last_action = None
         self.last_action_time = None
+        
+        self.fruit_detector = FruitDetection("OaxF2iDz0uE7kTh60Odx")
         
     def is_grabbing(self, hand_landmarks):
         """check if hand is holding"""
@@ -174,9 +226,9 @@ class SimpleHandTracker:
         current_time = datetime.now()
         time_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         cv2.putText(frame, time_str, (20, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.putText(frame, "CAM1", (20, 60), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # status and confidence
         status = "HOLDING" if self.confident_grab else "NOT HOLDING"
@@ -184,13 +236,13 @@ class SimpleHandTracker:
         text_size = cv2.getTextSize(status, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)[0]
         text_x = (frame.shape[1] - text_size[0]) // 2
         cv2.putText(frame, status, (text_x, 35), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
         
         # hand orientation
         if hasattr(self, 'hand_orientation'):
             orientation_text = f"Hand: {self.hand_orientation}"
             cv2.putText(frame, orientation_text, (text_x + text_size[0] + 20, 35),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # confidence bar
         bar_length = 200
@@ -205,14 +257,14 @@ class SimpleHandTracker:
         conf_size = cv2.getTextSize(conf_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
         conf_x = bar_x + (bar_length - conf_size[0]) // 2
         cv2.putText(frame, conf_text, (conf_x, 70), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         
         # hold duration
         if self.confident_grab and self.holding_start_time is not None:
             duration = (current_time - self.holding_start_time).total_seconds()
             duration_text = f"Hold: {duration:.1f}s"
             cv2.putText(frame, duration_text, (frame.shape[1] - 200, 35), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
         # last action with fade
         if self.last_action and self.last_action_time:
@@ -221,7 +273,7 @@ class SimpleHandTracker:
                 alpha = 1.0 - (time_since_action / 2.0)
                 action_color = (0, int(255 * alpha), int(255 * alpha))
                 cv2.putText(frame, f"Last Action: {self.last_action}", (frame.shape[1] - 300, 60), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, action_color, 2)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, action_color, 2)
         
         return frame
         
@@ -251,13 +303,16 @@ class SimpleHandTracker:
                     
                     if current_grab:
                         self.grab_confidence_counter = min(10, self.grab_confidence_counter + 1)
-                        if self.grab_confidence_counter >= 5:
+                        if self.grab_confidence_counter >= 5: # start holding
                             if not self.confident_grab:
                                 self.holding_start_time = datetime.now()
+                                # predictions = self.fruit_detector.async_inference(frame)
+                            # frame = self.fruit_detector.draw_predictions(frame, predictions)
+                            self.fruit_detector.async_inference(frame)
                             self.confident_grab = True
                     else:
                         self.grab_confidence_counter = max(0, self.grab_confidence_counter - 1)
-                        if self.grab_confidence_counter < 3:
+                        if self.grab_confidence_counter < 3: # reset grab state/start time
                             self.confident_grab = False
                             self.holding_start_time = None
                     
@@ -298,6 +353,8 @@ class SimpleHandTracker:
                 self.grab_confidence_counter = 0
                 self.trail_points = []
             
+            frame = self.fruit_detector.draw_predictions(frame)
+            
             # center line
             mid_x = int(frame.shape[1]/2)
             cv2.line(frame, (mid_x, 0), (mid_x, frame.shape[0]), 
@@ -312,15 +369,15 @@ class SimpleHandTracker:
             cv2.rectangle(left_overlay, (30, label_y-25), (150, label_y+10), (0, 0, 0), -1)
             frame = cv2.addWeighted(left_overlay, label_bg_alpha, frame, 1 - label_bg_alpha, 0)
             cv2.putText(frame, "PUT IN", (50, label_y), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
             
             # right zone
             right_overlay = frame.copy()
             cv2.rectangle(right_overlay, (frame.shape[1]-170, label_y-25), 
-                         (frame.shape[1]-30, label_y+10), (0, 0, 0), -1)
+                          (frame.shape[1]-30, label_y+10), (0, 0, 0), -1)
             frame = cv2.addWeighted(right_overlay, label_bg_alpha, frame, 1 - label_bg_alpha, 0)
             cv2.putText(frame, "TAKE OUT", (frame.shape[1]-150, label_y), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
             
             # status overlay
             frame = self.draw_status_overlay(frame)

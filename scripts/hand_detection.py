@@ -1,6 +1,7 @@
 import cv2 # type: ignore
 import mediapipe as mp # type: ignore
 import roboflow
+import easyocr
 from datetime import datetime
 import numpy as np
 import os
@@ -31,11 +32,14 @@ class FruitDetection:
     self.model.overlap = 0.4
     self.last_pred = []
     self.last_time = datetime.now()
+    self.text_reader = easyocr.Reader(['en'])
     
   def async_inference(self, frame):
     print("Starting inference...")
     def run_inference():
       temp_img_path = "temp.jpg"
+      result = self.text_reader.readtext(temp_img_path, detail = 0) # detail = 0 means omit bounding boxes and confidence levels
+      print(f"OCR Result: {result}")
       cv2.imwrite(temp_img_path, frame)
       prediction = self.model.predict(temp_img_path)
       print(f"Prediction: {prediction.json()}")

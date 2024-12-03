@@ -63,19 +63,24 @@ class FruitDetection:
       for prediction in self.last_pred:
         class_name = prediction["class"]
         confidence = prediction["confidence"]
-        
+        if confidence < 0.6:
+          continue
         x_center = prediction["x"]
         y_center = prediction["y"]
         width  = prediction["width"]
         height = prediction["height"]
-        # x1 = int((x_center - width/2) * frame.shape[1])
-        # y1 = int((y_center - height/2) * frame.shape[0])
-        # x2 = int((x_center + width/2) * frame.shape[1])
-        # y2 = int((y_center + height/2) * frame.shape[0])
-        x1 = int(x_center - width / 3)
-        y1 = int(y_center - height / 2.5)
-        x2 = int(x_center + width / 3)
-        y2 = int(y_center + height / 2.5)
+        x1 = int((x_center - width / 2))
+        y1 = int((y_center - height / 2))
+        x2 = int((x_center + width / 2))
+        y2 = int((y_center + height / 2))
+        
+        # scale = 0.8
+        # half_width = int(width * scale / 2)
+        # half_height = int(height * scale / 2)
+        # x1 = int(x_center - half_width)
+        # y1 = int(y_center - half_height)
+        # x2 = int(x_center + half_width)
+        # y2 = int(y_center + half_height)
         
         print(f"Detected {class_name} at ({x_center}, {y_center}) with confidence {confidence}")
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
